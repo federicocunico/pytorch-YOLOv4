@@ -16,7 +16,8 @@ from torch.utils.data import DataLoader
 from torch import optim
 from tensorboardX import SummaryWriter
 import logging
-import os, sys
+import os
+import sys
 from tqdm import tqdm
 from dataset import Yolo_dataset
 from cfg import Cfg
@@ -94,22 +95,28 @@ class Yolo_loss(nn.Module):
         self.n_classes = n_classes
         self.n_anchors = n_anchors
 
-        self.anchors = [[12, 16], [19, 36], [40, 28], [36, 75], [76, 55], [72, 146], [142, 110], [192, 243], [459, 401]]
+        self.anchors = [[12, 16], [19, 36], [40, 28], [36, 75], [
+            76, 55], [72, 146], [142, 110], [192, 243], [459, 401]]
         self.anch_masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         self.ignore_thre = 0.5
 
         self.masked_anchors, self.ref_anchors, self.grid_x, self.grid_y, self.anchor_w, self.anchor_h = [], [], [], [], [], []
 
         for i in range(3):
-            all_anchors_grid = [(w / self.strides[i], h / self.strides[i]) for w, h in self.anchors]
-            masked_anchors = np.array([all_anchors_grid[j] for j in self.anch_masks[i]], dtype=np.float32)
-            ref_anchors = np.zeros((len(all_anchors_grid), 4), dtype=np.float32)
+            all_anchors_grid = [(w / self.strides[i], h / self.strides[i])
+                                for w, h in self.anchors]
+            masked_anchors = np.array([all_anchors_grid[j]
+                                       for j in self.anch_masks[i]], dtype=np.float32)
+            ref_anchors = np.zeros(
+                (len(all_anchors_grid), 4), dtype=np.float32)
             ref_anchors[:, 2:] = np.array(all_anchors_grid, dtype=np.float32)
             ref_anchors = torch.from_numpy(ref_anchors)
             # calculate pred - xywh obj cls
             fsize = image_size // self.strides[i]
-            grid_x = torch.arange(fsize, dtype=torch.float).repeat(batch, 3, fsize, 1).to(device)
-            grid_y = torch.arange(fsize, dtype=torch.float).repeat(batch, 3, fsize, 1).permute(0, 1, 3, 2).to(device)
+            grid_x = torch.arange(fsize, dtype=torch.float).repeat(
+                batch, 3, fsize, 1).to(device)
+            grid_y = torch.arange(fsize, dtype=torch.float).repeat(
+                batch, 3, fsize, 1).permute(0, 1, 3, 2).to(device)
             anchor_w = torch.from_numpy(masked_anchors[:, 0]).repeat(batch, fsize, fsize, 1).permute(0, 3, 1, 2).to(
                 device)
             anchor_h = torch.from_numpy(masked_anchors[:, 1]).repeat(batch, fsize, fsize, 1).permute(0, 3, 1, 2).to(
@@ -124,18 +131,26 @@ class Yolo_loss(nn.Module):
 
     def build_target(self, pred, labels, batchsize, fsize, n_ch, output_id):
         # target assignment
-        tgt_mask = torch.zeros(batchsize, self.n_anchors, fsize, fsize, 4 + self.n_classes).to(device=self.device)
-        obj_mask = torch.ones(batchsize, self.n_anchors, fsize, fsize).to(device=self.device)
-        tgt_scale = torch.zeros(batchsize, self.n_anchors, fsize, fsize, 2).to(self.device)
-        target = torch.zeros(batchsize, self.n_anchors, fsize, fsize, n_ch).to(self.device)
+        tgt_mask = torch.zeros(batchsize, self.n_anchors, fsize,
+                               fsize, 4 + self.n_classes).to(device=self.device)
+        obj_mask = torch.ones(batchsize, self.n_anchors,
+                              fsize, fsize).to(device=self.device)
+        tgt_scale = torch.zeros(batchsize, self.n_anchors,
+                                fsize, fsize, 2).to(self.device)
+        target = torch.zeros(batchsize, self.n_anchors,
+                             fsize, fsize, n_ch).to(self.device)
 
         # labels = labels.cpu().data
         nlabel = (labels.sum(dim=2) > 0).sum(dim=1)  # number of objects
 
-        truth_x_all = (labels[:, :, 2] + labels[:, :, 0]) / (self.strides[output_id] * 2)
-        truth_y_all = (labels[:, :, 3] + labels[:, :, 1]) / (self.strides[output_id] * 2)
-        truth_w_all = (labels[:, :, 2] - labels[:, :, 0]) / self.strides[output_id]
-        truth_h_all = (labels[:, :, 3] - labels[:, :, 1]) / self.strides[output_id]
+        truth_x_all = (labels[:, :, 2] + labels[:, :, 0]
+                       ) / (self.strides[output_id] * 2)
+        truth_y_all = (labels[:, :, 3] + labels[:, :, 1]
+                       ) / (self.strides[output_id] * 2)
+        truth_w_all = (labels[:, :, 2] - labels[:, :, 0]
+                       ) / self.strides[output_id]
+        truth_h_all = (labels[:, :, 3] - labels[:, :, 1]
+                       ) / self.strides[output_id]
         truth_i_all = truth_x_all.to(torch.int16).cpu().numpy()
         truth_j_all = truth_y_all.to(torch.int16).cpu().numpy()
 
@@ -150,7 +165,8 @@ class Yolo_loss(nn.Module):
             truth_j = truth_j_all[b, :n]
 
             # calculate iou between truth and reference anchors
-            anchor_ious_all = bboxes_iou(truth_box.cpu(), self.ref_anchors[output_id])
+            anchor_ious_all = bboxes_iou(
+                truth_box.cpu(), self.ref_anchors[output_id])
             best_n_all = anchor_ious_all.argmax(dim=1)
             best_n = best_n_all % 3
             best_n_mask = ((best_n_all == self.anch_masks[output_id][0]) |
@@ -176,15 +192,19 @@ class Yolo_loss(nn.Module):
                     a = best_n[ti]
                     obj_mask[b, a, j, i] = 1
                     tgt_mask[b, a, j, i, :] = 1
-                    target[b, a, j, i, 0] = truth_x_all[b, ti] - truth_x_all[b, ti].to(torch.int16).to(torch.float)
-                    target[b, a, j, i, 1] = truth_y_all[b, ti] - truth_y_all[b, ti].to(torch.int16).to(torch.float)
+                    target[b, a, j, i, 0] = truth_x_all[b, ti] - \
+                        truth_x_all[b, ti].to(torch.int16).to(torch.float)
+                    target[b, a, j, i, 1] = truth_y_all[b, ti] - \
+                        truth_y_all[b, ti].to(torch.int16).to(torch.float)
                     target[b, a, j, i, 2] = torch.log(
                         truth_w_all[b, ti] / torch.Tensor(self.masked_anchors[output_id])[best_n[ti], 0] + 1e-16)
                     target[b, a, j, i, 3] = torch.log(
                         truth_h_all[b, ti] / torch.Tensor(self.masked_anchors[output_id])[best_n[ti], 1] + 1e-16)
                     target[b, a, j, i, 4] = 1
-                    target[b, a, j, i, 5 + labels[b, ti, 4].to(torch.int16).cpu().numpy()] = 1
-                    tgt_scale[b, a, j, i, :] = torch.sqrt(2 - truth_w_all[b, ti] * truth_h_all[b, ti] / fsize / fsize)
+                    target[b, a, j, i, 5 + labels[b, ti,
+                                                  4].to(torch.int16).cpu().numpy()] = 1
+                    tgt_scale[b, a, j, i, :] = torch.sqrt(
+                        2 - truth_w_all[b, ti] * truth_h_all[b, ti] / fsize / fsize)
         return obj_mask, tgt_mask, tgt_scale, target
 
     def forward(self, xin, labels=None):
@@ -198,7 +218,8 @@ class Yolo_loss(nn.Module):
             output = output.permute(0, 1, 3, 4, 2)  # .contiguous()
 
             # logistic activation for xy, obj, cls
-            output[..., np.r_[:2, 4:n_ch]] = torch.sigmoid(output[..., np.r_[:2, 4:n_ch]])
+            output[..., np.r_[:2, 4:n_ch]] = torch.sigmoid(
+                output[..., np.r_[:2, 4:n_ch]])
 
             pred = output[..., :4].clone()
             pred[..., 0] += self.grid_x[output_id]
@@ -206,7 +227,8 @@ class Yolo_loss(nn.Module):
             pred[..., 2] = torch.exp(pred[..., 2]) * self.anchor_w[output_id]
             pred[..., 3] = torch.exp(pred[..., 3]) * self.anchor_h[output_id]
 
-            obj_mask, tgt_mask, tgt_scale, target = self.build_target(pred, labels, batchsize, fsize, n_ch, output_id)
+            obj_mask, tgt_mask, tgt_scale, target = self.build_target(
+                pred, labels, batchsize, fsize, n_ch, output_id)
 
             # loss calculation
             output[..., 4] *= obj_mask
@@ -219,10 +241,14 @@ class Yolo_loss(nn.Module):
 
             loss_xy += F.binary_cross_entropy(input=output[..., :2], target=target[..., :2],
                                               weight=tgt_scale * tgt_scale, size_average=False)
-            loss_wh += F.mse_loss(input=output[..., 2:4], target=target[..., 2:4], size_average=False) / 2
-            loss_obj += F.binary_cross_entropy(input=output[..., 4], target=target[..., 4], size_average=False)
-            loss_cls += F.binary_cross_entropy(input=output[..., 5:], target=target[..., 5:], size_average=False)
-            loss_l2 += F.mse_loss(input=output, target=target, size_average=False)
+            loss_wh += F.mse_loss(input=output[..., 2:4],
+                                  target=target[..., 2:4], size_average=False) / 2
+            loss_obj += F.binary_cross_entropy(
+                input=output[..., 4], target=target[..., 4], size_average=False)
+            loss_cls += F.binary_cross_entropy(
+                input=output[..., 5:], target=target[..., 5:], size_average=False)
+            loss_l2 += F.mse_loss(input=output,
+                                  target=target, size_average=False)
 
         loss = loss_xy + loss_wh + loss_obj + loss_cls
 
@@ -245,10 +271,11 @@ def collate(batch):
 
 def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=20, img_scale=0.5):
     if not os.path.isfile(config.train_label):
-        print(f'No train data found in: {config.train_label} with config: {config}')
+        print(
+            f'No train data found in: {config.train_label} with config: {config}')
         import sys
         sys.exit(-1)
-    
+
     train_dataset = Yolo_dataset(config.train_label, config)
     n_train = len(train_dataset)
 
@@ -259,9 +286,10 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
     else:
         val_dataset = Yolo_dataset(config.val_label, config)
         n_val = len(val_dataset)
-    
+
     if n_train <= 0:
-        print(f'No train data found in: {config.train_label} with config: {config}')
+        print(
+            f'No train data found in: {config.train_label} with config: {config}')
         import sys
         sys.exit(-1)
 
@@ -270,7 +298,7 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
 
     if val_dataset is not None:
         val_loader = DataLoader(val_dataset, batch_size=config.batch // config.subdivisions, shuffle=True, num_workers=8,
-                            pin_memory=True, drop_last=True)
+                                pin_memory=True, drop_last=True)
     else:
         val_loader = None
 
@@ -311,16 +339,18 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
             factor = 0.01
         return factor
 
-    optimizer = optim.Adam(model.parameters(), lr=config.learning_rate / config.batch, betas=(0.9, 0.999), eps=1e-08)
+    optimizer = optim.Adam(model.parameters(
+    ), lr=config.learning_rate / config.batch, betas=(0.9, 0.999), eps=1e-08)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, burnin_schedule)
 
-    criterion = Yolo_loss(device=device, batch=config.batch // config.subdivisions,n_classes=config.classes)
+    criterion = Yolo_loss(device=device, batch=config.batch //
+                          config.subdivisions, n_classes=config.classes)
     # scheduler = ReduceLROnPlateau(optimizer, mode='max', verbose=True, patience=6, min_lr=1e-7)
     # scheduler = CosineAnnealingWarmRestarts(optimizer, 0.001, 1e-6, 20)
 
     model.train()
     for epoch in range(epochs):
-        #model.train()
+        # model.train()
         epoch_loss = 0
         epoch_step = 0
 
@@ -335,25 +365,32 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
                 bboxes = bboxes.to(device=device)
 
                 bboxes_pred = model(images)
-                loss, loss_xy, loss_wh, loss_obj, loss_cls, loss_l2 = criterion(bboxes_pred, bboxes)
+                loss, loss_xy, loss_wh, loss_obj, loss_cls, loss_l2 = criterion(
+                    bboxes_pred, bboxes)
                 # loss = loss / config.subdivisions
                 loss.backward()
 
                 epoch_loss += loss.item()
 
-                if global_step  % config.subdivisions == 0:
+                if global_step % config.subdivisions == 0:
                     optimizer.step()
                     scheduler.step()
                     model.zero_grad()
 
                 if global_step % (log_step * config.subdivisions) == 0:
                     writer.add_scalar('train/Loss', loss.item(), global_step)
-                    writer.add_scalar('train/loss_xy', loss_xy.item(), global_step)
-                    writer.add_scalar('train/loss_wh', loss_wh.item(), global_step)
-                    writer.add_scalar('train/loss_obj', loss_obj.item(), global_step)
-                    writer.add_scalar('train/loss_cls', loss_cls.item(), global_step)
-                    writer.add_scalar('train/loss_l2', loss_l2.item(), global_step)
-                    writer.add_scalar('lr', scheduler.get_lr()[0] * config.batch, global_step)
+                    writer.add_scalar(
+                        'train/loss_xy', loss_xy.item(), global_step)
+                    writer.add_scalar(
+                        'train/loss_wh', loss_wh.item(), global_step)
+                    writer.add_scalar('train/loss_obj',
+                                      loss_obj.item(), global_step)
+                    writer.add_scalar('train/loss_cls',
+                                      loss_cls.item(), global_step)
+                    writer.add_scalar(
+                        'train/loss_l2', loss_l2.item(), global_step)
+                    writer.add_scalar('lr', scheduler.get_lr()[
+                                      0] * config.batch, global_step)
                     '''
                     pbar.set_postfix({'loss (batch)': loss.item(), 'loss_xy': loss_xy.item(),
                                         'loss_wh': loss_wh.item(),
@@ -364,21 +401,23 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
                                         })
                     '''
                     logging.info('Train step_{}: loss : {},loss xy : {},loss wh : {},'
-                                  'loss obj : {}，loss cls : {},loss l2 : {},lr : {}'
-                                  .format(global_step, loss.item(), loss_xy.item(),
-                                          loss_wh.item(), loss_obj.item(),
-                                          loss_cls.item(), loss_l2.item(),
-                                          scheduler.get_lr()[0] * config.batch))
+                                 'loss obj : {}，loss cls : {},loss l2 : {},lr : {}'
+                                 .format(global_step, loss.item(), loss_xy.item(),
+                                         loss_wh.item(), loss_obj.item(),
+                                         loss_cls.item(), loss_l2.item(),
+                                         scheduler.get_lr()[0] * config.batch))
 
                 pbar.update(images.shape[0])
 
             if save_cp:
+                # TODO: salvare checkpoint in mounted docker
                 try:
                     os.mkdir(config.checkpoints)
                     logging.info('Created checkpoint directory')
                 except OSError:
                     pass
-                torch.save(model.state_dict(), os.path.join(config.checkpoints, f'Yolov4_epoch{epoch + 1}.pth'))
+                torch.save(model.state_dict(), os.path.join(
+                    config.checkpoints, f'Yolov4_epoch{epoch + 1}.pth'))
                 logging.info(f'Checkpoint {epoch + 1} saved !')
 
     writer.close()
@@ -388,8 +427,10 @@ def get_args(**kwargs):
     cfg = kwargs
     parser = argparse.ArgumentParser(description='Train the Model on images and target masks',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-b', '--batch-size', metavar='B', type=int, nargs='?', default=2,help='Batch size', dest='batch')
-    parser.add_argument('-s', '--subdivisions', metavar='S', type=int, nargs='?', default=1,help='subdivisions', dest='subdivisions')
+    parser.add_argument('-b', '--batch-size', metavar='B', type=int,
+                        nargs='?', default=2, help='Batch size', dest='batch')
+    parser.add_argument('-s', '--subdivisions', metavar='S', type=int,
+                        nargs='?', default=1, help='subdivisions', dest='subdivisions')
     parser.add_argument('-l', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.001,
                         help='Learning rate', dest='learning_rate')
     parser.add_argument('-f', '--load', dest='load', type=str, default=None,
@@ -398,10 +439,14 @@ def get_args(**kwargs):
                         help='GPU', dest='gpu')
     parser.add_argument('-dir', '--data-dir', type=str, default=None,
                         help='dataset dir', dest='dataset_dir')
-    parser.add_argument('-pretrained',type=str,default=None,help='pretrained yolov4.conv.137')
-    parser.add_argument('-classes',type=int,default=80,help='dataset classes')
-    parser.add_argument('-train_label_path',dest='train_label',type=str,default='data/train.txt',help="train label path")
-    parser.add_argument('-epochs',dest='TRAIN_EPOCHS',type=int,default=10,help="number of training epochs")
+    parser.add_argument('-pretrained', type=str, default=None,
+                        help='pretrained yolov4.conv.137')
+    parser.add_argument('-classes', type=int, default=80,
+                        help='dataset classes')
+    parser.add_argument('-train_label_path', dest='train_label',
+                        type=str, default='data/train.txt', help="train label path")
+    parser.add_argument('-epochs', dest='TRAIN_EPOCHS',
+                        type=int, default=10, help="number of training epochs")
     args = vars(parser.parse_args())
 
     for k in args.keys():
@@ -415,6 +460,7 @@ def init_logger(log_file=None, log_dir=None, log_level=logging.INFO, mode='w', s
     mode: 'a', append; 'w', 覆盖原文件写入.
     """
     import datetime
+
     def get_date_str():
         now = datetime.datetime.now()
         return now.strftime('%Y-%m-%d_%H-%M-%S')
@@ -448,13 +494,13 @@ def init_logger(log_file=None, log_dir=None, log_level=logging.INFO, mode='w', s
 if __name__ == "__main__":
     logging = init_logger(log_dir='log')
     cfg = get_args(**Cfg)
-    if cfg.gpu != -1:
+    if cfg.gpu != '-1':
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.gpu
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Using device {device}')
 
-    model = Yolov4(cfg.pretrained,n_classes=cfg.classes)
+    model = Yolov4(cfg.pretrained, n_classes=cfg.classes)
 
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
