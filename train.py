@@ -244,17 +244,35 @@ def collate(batch):
 
 
 def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=20, img_scale=0.5):
+    if not os.path.isfile(config.train_label):
+        print(f'No train data found in: {config.train_label} with config: {config}')
+        import sys
+        sys.exit(-1)
+    
     train_dataset = Yolo_dataset(config.train_label, config)
-    val_dataset = Yolo_dataset(config.val_label, config)
-
     n_train = len(train_dataset)
-    n_val = len(val_dataset)
+
+    if not os.path.isfile(config.val_label):
+        print('Validation data not provided. Ignoring')
+        val_dataset = None
+        n_val = 0
+    else:
+        val_dataset = Yolo_dataset(config.val_label, config)
+        n_val = len(val_dataset)
+    
+    if n_train <= 0:
+        print(f'No train data found in: {config.train_label} with config: {config}')
+        import sys
+        sys.exit(-1)
 
     train_loader = DataLoader(train_dataset, batch_size=config.batch // config.subdivisions, shuffle=True,
-                              num_workers=8, pin_memory=True, drop_last=True, collate_fn=collate)
+                              num_workers=0, pin_memory=True, drop_last=True, collate_fn=collate)
 
-    val_loader = DataLoader(val_dataset, batch_size=config.batch // config.subdivisions, shuffle=True, num_workers=8,
+    if val_dataset is not None:
+        val_loader = DataLoader(val_dataset, batch_size=config.batch // config.subdivisions, shuffle=True, num_workers=8,
                             pin_memory=True, drop_last=True)
+    else:
+        val_loader = None
 
     writer = SummaryWriter(log_dir=config.TRAIN_TENSORBOARD_DIR,
                            filename_suffix=f'OPT_{config.TRAIN_OPTIMIZER}_LR_{config.learning_rate}_BS_{config.batch}_Sub_{config.subdivisions}_Size_{config.width}',
@@ -382,7 +400,7 @@ def get_args(**kwargs):
                         help='dataset dir', dest='dataset_dir')
     parser.add_argument('-pretrained',type=str,default=None,help='pretrained yolov4.conv.137')
     parser.add_argument('-classes',type=int,default=80,help='dataset classes')
-    parser.add_argument('-train_label_path',dest='train_label',type=str,default='train.txt',help="train label path")
+    parser.add_argument('-train_label_path',dest='train_label',type=str,default='data/train.txt',help="train label path")
     parser.add_argument('-epochs',dest='TRAIN_EPOCHS',type=int,default=10,help="number of training epochs")
     args = vars(parser.parse_args())
 
@@ -430,7 +448,9 @@ def init_logger(log_file=None, log_dir=None, log_level=logging.INFO, mode='w', s
 if __name__ == "__main__":
     logging = init_logger(log_dir='log')
     cfg = get_args(**Cfg)
-    os.environ["CUDA_VISIBLE_DEVICES"] = cfg.gpu
+    if cfg.gpu != -1:
+        os.environ["CUDA_VISIBLE_DEVICES"] = cfg.gpu
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Using device {device}')
 
