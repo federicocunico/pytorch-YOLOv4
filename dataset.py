@@ -239,7 +239,7 @@ def draw_box(img, bboxes):
 
 
 class Yolo_dataset(Dataset):
-    def __init__(self, lable_path, cfg):
+    def __init__(self, labels_path, cfg):
         super(Yolo_dataset, self).__init__()
         if cfg.mixup == 2:
             print("cutmix=1 - isn't supported for Detector")
@@ -251,12 +251,15 @@ class Yolo_dataset(Dataset):
         self.cfg = cfg
 
         truth = {}
-        f = open(lable_path, 'r', encoding='utf-8')
-        for line in f.readlines():
-            data = line.split(" ")
-            truth[data[0]] = []
-            for i in data[1:]:
-                truth[data[0]].append([int(j) for j in i.split(',')])
+        if os.path.isfile(labels_path):
+            f = open(labels_path, 'r', encoding='utf-8')
+            for line in f.readlines():
+                data = line.split(" ")
+                truth[data[0]] = []
+                for i in data[1:]:
+                    truth[data[0]].append([int(j) for j in i.split(',')])
+        else:
+            print(f'Config file: {labels_path} not found')
 
         self.truth = truth
 
