@@ -294,7 +294,7 @@ def train(model, device, config, epochs=5, batch_size=1, save_cp=True, log_step=
         sys.exit(-1)
 
     train_loader = DataLoader(train_dataset, batch_size=config.batch // config.subdivisions, shuffle=True,
-                              num_workers=0, pin_memory=True, drop_last=True, collate_fn=collate)
+                              num_workers=8, pin_memory=True, drop_last=True, collate_fn=collate)
 
     if val_dataset is not None:
         val_loader = DataLoader(val_dataset, batch_size=config.batch // config.subdivisions, shuffle=True, num_workers=8,
