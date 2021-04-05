@@ -395,6 +395,9 @@ def load_class_names(namesfile):
 
 def do_detect(model, img, conf_thresh, n_classes, nms_thresh, use_cuda=1):
     model.eval()
+    global t0
+    global t1
+    global t2
     t0 = time.time()
 
     if isinstance(img, Image.Image):
@@ -457,6 +460,10 @@ def post_processing(img, conf_thresh, n_classes, nms_thresh, list_features_numpy
     t4 = time.time()
 
     if False:
+        global t0
+        global t1
+        global t2
+        
         print('-----------------------------------')
         print(' image to tensor : %f' % (t1 - t0))
         print('  tensor to cuda : %f' % (t2 - t1))
@@ -465,3 +472,5 @@ def post_processing(img, conf_thresh, n_classes, nms_thresh, list_features_numpy
         print('           total : %f' % (t4 - t0))
         print('-----------------------------------')
     return boxes
+
+t0,t1,t2,t3,t4 = 0,0,0,0,0

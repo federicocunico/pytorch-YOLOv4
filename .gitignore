@@ -9,5 +9,7 @@ __pycache__
 runs
 log
 
+Images/
+
 predictions.jpg
 predictions_onnx.jpg

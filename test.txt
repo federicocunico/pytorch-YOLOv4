@@ -1,0 +1,46 @@
+/yolo4/data/Images/000101.jpg 522,85,559,126,0
+/yolo4/data/Images/000129.jpg 399,156,457,236,0
+/yolo4/data/Images/000147.jpg 283,295,340,386,0
+/yolo4/data/Images/001546.jpg 224,362,282,431,0
+/yolo4/data/Images/001569.jpg 307,258,384,323,0
+/yolo4/data/Images/001598.jpg 300,215,380,287,0
+/yolo4/data/Images/001609.jpg 311,215,380,287,0
+/yolo4/data/Images/001631.jpg 312,215,380,286,0
+/yolo4/data/Images/001675.jpg 311,203,384,285,0
+/yolo4/data/Images/001677.jpg 312,219,382,286,0
+/yolo4/data/Images/001706.jpg 336,222,422,269,0
+/yolo4/data/Images/001720.jpg 403,189,466,246,0
+/yolo4/data/Images/001861.jpg 211,347,289,428,1
+/yolo4/data/Images/001877.jpg 375,157,420,227,1
+/yolo4/data/Images/001876.jpg 371,166,414,242,1
+/yolo4/data/Images/001889.jpg 435,82,470,140,1
+/yolo4/data/Images/001897.jpg 446,55,477,105,1 575,110,626,148,0
+/yolo4/data/Images/001904.jpg 542,87,600,148,0 446,47,475,80,1
+/yolo4/data/Images/001910.jpg 509,79,557,125,0 445,34,478,75,1
+/yolo4/data/Images/001981.jpg 228,163,266,222,1 185,206,249,262,0
+/yolo4/data/Images/001994.jpg 217,236,297,301,1 182,240,235,320,0
+/yolo4/data/Images/002120.jpg 73,189,141,232,0 270,132,311,188,1
+/yolo4/data/Images/002128.jpg 265,145,332,202,1
+/yolo4/data/Images/002146.jpg 274,166,344,208,1 37,192,123,232,0
+/yolo4/data/Images/002180.jpg 408,95,463,131,0 387,130,436,180,1
+/yolo4/data/Images/002186.jpg 413,117,460,161,1
+/yolo4/data/Images/002193.jpg 426,89,467,149,1
+/yolo4/data/Images/002210.jpg 470,74,502,109,1
+/yolo4/data/Images/002248.jpg 560,106,592,152,1 559,154,605,189,0
+/yolo4/data/Images/002256.jpg 409,154,473,213,0
+/yolo4/data/Images/002270.jpg 298,151,353,212,0
+/yolo4/data/Images/002323.jpg 462,92,518,136,1 544,120,565,177,0
+/yolo4/data/Images/002389.jpg 504,187,550,234,0 407,183,480,242,1
+/yolo4/data/Images/002390.jpg 514,190,558,232,0 417,191,486,247,1
+/yolo4/data/Images/002391.jpg 529,188,570,231,0 425,192,492,251,1
+/yolo4/data/Images/002468.jpg 407,158,475,194,0 472,204,546,245,1
+/yolo4/data/Images/002488.jpg 283,193,369,259,1 237,196,280,262,0
+/yolo4/data/Images/002489.jpg 240,192,275,261,0 273,197,359,259,1
+/yolo4/data/Images/003914.jpg 261,214,294,310,0
+/yolo4/data/Images/003894.jpg 250,133,307,202,0
+/yolo4/data/Images/004074.jpg 178,254,261,321,0 335,142,377,204,1
+/yolo4/data/Images/004089.jpg 171,287,258,320,0 352,119,399,173,1
+/yolo4/data/Images/004481.jpg 182,211,226,276,0
+/yolo4/data/Images/004505.jpg 196,172,229,227,0
+/yolo4/data/Images/004502.jpg 197,176,244,237,0
+/yolo4/data/Images/004526.jpg 183,169,236,232,0
